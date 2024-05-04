@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/screens/note_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'note_detail_screen.dart';
 
 class NoteListScreen extends StatefulWidget {
   @override
@@ -33,7 +33,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
         title: Text('Notes'),
       ),
       body: _notes.isEmpty
-          ? Center(
+          ? const Center(
               child: Text('No notes found'),
             )
           : ListView.builder(
@@ -46,17 +46,33 @@ class _NoteListScreenState extends State<NoteListScreen> {
                 return ListTile(
                   title: Text(title),
                   subtitle: Text(content),
+                  onTap: () {
+                    // Navigate to the note detail screen with note details
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NoteDetailScreen(
+                          title: title,
+                          content: content,
+                          onUpdate: () {
+                            // Reload notes when returning from detail screen
+                            _loadNotes();
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to the note detail screen
+          // Navigate to the note detail screen to add a new note
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => NoteDetailScreen()),
           ).then((_) {
-            // Reload notes when returning from the detail screen
+            // Reload notes when returning from detail screen
             _loadNotes();
           });
         },
