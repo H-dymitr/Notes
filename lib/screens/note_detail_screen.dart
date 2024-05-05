@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class NoteDetailScreen extends StatefulWidget {
   final String? title;
   final String? content;
   final Function()? onUpdate;
 
-  NoteDetailScreen({this.title, this.content, this.onUpdate});
+  const NoteDetailScreen({super.key, this.title, this.content, this.onUpdate});
 
   @override
   _NoteDetailScreenState createState() => _NoteDetailScreenState();
@@ -16,6 +17,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _contentController;
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  String _recognizedText = '';
+  bool _isRecording = false;
 
   @override
   void initState() {
@@ -31,7 +35,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         title: Text(widget.title != null ? 'Edit Note' : 'Add Note'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -49,11 +53,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
               TextFormField(
                 controller: _contentController,
                 decoration: InputDecoration(
                   labelText: 'Content',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isRecording ? Icons.mic_rounded : Icons.mic_none_rounded,
+                      color: _isRecording ? Colors.red : null,
+                    ),
+                    onPressed: () {
+                      if (_isRecording) {
+                        _stopSpeechRecognition();
+                      } else {
+                        _startSpeechRecognition();
+                      }
+                    },
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -63,16 +80,41 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 },
                 maxLines: null,
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: _saveNote,
-                child: Text('Save'),
+                child: const Text('Save'),
               ),
+              const SizedBox(height: 16.0),
+              Text(_recognizedText),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _startSpeechRecognition() async {
+    setState(() {
+      _isRecording = true;
+    });
+    if (await _speech.initialize()) {
+      _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _recognizedText = result.recognizedWords;
+            _contentController.text = _recognizedText;
+          });
+        },
+      );
+    }
+  }
+
+  void _stopSpeechRecognition() {
+    setState(() {
+      _isRecording = false;
+    });
+    _speech.stop();
   }
 
   void _saveNote() async {

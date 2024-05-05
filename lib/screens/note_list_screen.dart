@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'note_detail_screen.dart';
 
 class NoteListScreen extends StatefulWidget {
+  const NoteListScreen({super.key});
+
   @override
   _NoteListScreenState createState() => _NoteListScreenState();
 }
@@ -30,7 +32,7 @@ class _NoteListScreenState extends State<NoteListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Notes'),
+        title: const Text('Notes'),
       ),
       body: _notes.isEmpty
           ? const Center(
@@ -70,13 +72,13 @@ class _NoteListScreenState extends State<NoteListScreen> {
           // Navigate to the note detail screen to add a new note
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => NoteDetailScreen()),
+            MaterialPageRoute(builder: (context) => const NoteDetailScreen()),
           ).then((_) {
             // Reload notes when returning from detail screen
             _loadNotes();
           });
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
