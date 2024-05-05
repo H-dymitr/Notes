@@ -28,6 +28,38 @@ class _NoteListScreenState extends State<NoteListScreen> {
     }
   }
 
+  Future<bool> _confirmDismiss() async {
+    return await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm'),
+        content: const Text('Are you sure you want to delete this note?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _removeNote(int index) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? notes = prefs.getStringList('notes');
+    if (notes != null) {
+      notes.removeAt(index);
+      await prefs.setStringList('notes', notes);
+      setState(() {
+        _notes = notes;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,25 +77,39 @@ class _NoteListScreenState extends State<NoteListScreen> {
                 List<String> noteParts = _notes[index].split('|');
                 String title = noteParts[0];
                 String content = noteParts[1];
-                return ListTile(
-                  title: Text(title),
-                  subtitle: Text(content),
-                  onTap: () {
-                    // Navigate to the note detail screen with note details
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NoteDetailScreen(
-                          title: title,
-                          content: content,
-                          onUpdate: () {
-                            // Reload notes when returning from detail screen
-                            _loadNotes();
-                          },
-                        ),
-                      ),
-                    );
+                return Dismissible(
+                  key: Key(_notes[index]),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  confirmDismiss: (direction) => _confirmDismiss(),
+                  onDismissed: (direction) {
+                    _removeNote(index);
                   },
+                  child: ListTile(
+                    title: Text(title),
+                    subtitle: Text(content),
+                    onTap: () {
+                      // Navigate to the note detail screen with note details
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NoteDetailScreen(
+                            title: title,
+                            content: content,
+                            onUpdate: () {
+                              // Reload notes when returning from detail screen
+                              _loadNotes();
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),
